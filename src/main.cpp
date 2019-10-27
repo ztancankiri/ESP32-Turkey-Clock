@@ -1,7 +1,18 @@
+#include "config.h"
+
 #include "toolkit.h"
 #include "apiParser.h"
 #include "networkConnect.h"
-#include "config.h"
+//#include "eDisplay.h"
+
+#define ENABLE_GxEPD2_GFX 0
+
+#include <GxEPD2_BW.h>
+#include <Fonts/FreeMonoBold9pt7b.h>
+
+GxEPD2_BW<GxEPD2_154, GxEPD2_154::HEIGHT> display(GxEPD2_154(15, 27, 26, 25));
+
+void printText(String text);
 
 void setup()
 {
@@ -23,6 +34,17 @@ void setup()
   {
     Serial.println("Connection Error!");
   }
+
+  display.init(115200);
+
+  // *** special handling for Waveshare ESP32 Driver board *** //
+  SPI.end(); // release standard SPI pins, e.g. SCK(18), MISO(19), MOSI(23), SS(5)
+  SPI.begin(13, 12, 14, 15); // map and init SPI pins SCK(13), MISO(12), MOSI(14), SS(15)
+  // *** end of special handling for Waveshare ESP32 Driver board *** //
+
+  // first update should be full refresh
+  printText(String("EBS <3"));
+  display.powerOff();
 }
 
 void loop()
@@ -61,5 +83,31 @@ void loop()
 
   Serial.println();
 
+  printText("Time: " + t + "\nCity: " + city + "\nTemp: " + sicaklik + "\nEvent: " + fixTurkishLetters(eventLookup(hadiseKodu)) + "\nHumidity: " + nem + "\nPressure: " + denizeIndirgenmisBasinc + "\nW. Speed: " + String(round(hiz)) + "\nW. Direction: " + ruzgarYon);
+
   delay(10000);
+}
+
+void printText(String text) {
+  display.setRotation(1);
+  display.setFont(&FreeMonoBold9pt7b);
+  display.setTextColor(GxEPD_BLACK);
+
+  const char* text_ptr = text.c_str();
+  
+  int16_t tbx, tby; 
+  uint16_t tbw, tbh;
+  display.getTextBounds(text_ptr, 0, 0, &tbx, &tby, &tbw, &tbh);
+  
+  //uint16_t x = ((display.width() - tbw) / 2) - tbx;
+  uint16_t y = ((display.height() - tbh) / 2) - tby;
+  
+  display.setFullWindow();
+  display.firstPage();
+  do {
+    display.fillScreen(GxEPD_WHITE);
+    display.setCursor(0, y);
+    display.print(text_ptr);
+  }
+  while (display.nextPage());
 }

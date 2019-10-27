@@ -1,3 +1,6 @@
+#ifndef apiParser_h
+#define apiParser_h
+
 #include <Arduino.h>
 #include <HTTPClient.h>
 
@@ -8,3 +11,5 @@ String getCity(String IP);
 String getTahminIst(String city);
 String getWeatherInfo(String tahminIstNo);
 String getTime(String city);
+
+#endif
